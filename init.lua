@@ -208,6 +208,7 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   end,
 })
 
+-- Set python host for neovim
 vim.g.python3_host_prog = '/home/kovacsdavid/.pyenv/versions/nvim/bin/python'
 
 -- [[ Install `lazy.nvim` plugin manager ]]
@@ -236,18 +237,6 @@ vim.opt.rtp:prepend(lazypath)
 require('lazy').setup({
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
   'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
-
-  -- Catppuccin theme
-  { 'catppuccin/nvim', name = 'catppuccin', priority = 1000 },
-
-  -- Nord theme
-  { 'shaunsingh/nord.nvim', name = 'nord', priority = 1000 },
-
-  -- Everforest theme
-  { 'sainnhe/everforest', lazy = false, priority = 1000 },
-
-  -- Kanagawa theme
-  { 'rebelot/kanagawa.nvim', priority = 1000 },
 
   -- NOTE: Plugins can also be added by using a table,
   -- with the first argument being the link and the following
@@ -340,6 +329,7 @@ require('lazy').setup({
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
         { '<leader>p', group = 'Har[P]oon', mode = { 'n' } },
         { '<leader>l', group = '[L]spsaga', mode = { 'n' } },
+        { '<leader>i', group = 'Sett[I]ngs', mode = { 'n' } },
       },
     },
   },
@@ -484,6 +474,9 @@ require('lazy').setup({
       { 'j-hui/fidget.nvim', opts = {} },
       {
         'nvimdev/lspsaga.nvim',
+        dependencies = {
+          'nvim-treesitter/nvim-treesitter',
+        },
         opts = {
           show_server_name = true,
         },
@@ -496,6 +489,7 @@ require('lazy').setup({
         vim.keymap.set('n', '<leader>ln', '<cmd>Lspsaga diagnostic_jump_next<CR>', { desc = 'Jump to next diagnostic message' }),
         vim.keymap.set('n', '<leader>lp', '<cmd>Lspsaga diagnostic_jump_prev<CR>', { desc = 'Jump to previous diagnostic message' }),
         vim.keymap.set('n', '<leader>lf', '<cmd>Lspsaga finder<CR>', { desc = 'Open finder window' }),
+        vim.keymap.set('n', '<leader>lr', '<cmd>Lspsaga rename<CR>', { desc = 'Rename under cursor' }),
       },
 
       -- Allows extra capabilities provided by nvim-cmp
@@ -754,7 +748,7 @@ require('lazy').setup({
         -- You can use 'stop_after_first' to run the first available formatter from the list
         javascript = { 'biome', 'prettierd', 'prettier', stop_after_first = true },
         typescript = { 'biome' },
-        javascriptreact = { 'biome' },
+        javascriptreact = { 'biome', 'prettierd', stop_after_first = true },
         typescriptreact = { 'biome' },
         css = { 'biome' },
         markdown = { 'markdownlint' },
@@ -878,27 +872,6 @@ require('lazy').setup({
     end,
   },
 
-  { -- You can easily change to a different colorscheme.
-    -- Change the name of the colorscheme plugin below, and then
-    -- change the command in the config to whatever the name of that colorscheme is.
-    --
-    -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    'folke/tokyonight.nvim',
-    priority = 1000, -- Make sure to load this before all the other start plugins.
-    init = function()
-      -- Load the colorscheme here.
-      -- Like many other themes, this one has different styles, and you could load
-      -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-
-      -- Some everforest config
-      -- vim.cmd "let g:everforest_background = 'hard'"
-      vim.cmd.colorscheme 'kanagawa'
-
-      -- You can configure highlights by doing something like:
-      vim.cmd.hi 'Comment gui=none'
-    end,
-  },
-
   -- Highlight todo, notes, etc in comments
   { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
 
@@ -967,7 +940,7 @@ require('lazy').setup({
         -- Some languages depend on vim's regex highlighting system (such as Ruby) for indent rules.
         --  If you are experiencing weird indenting issues, add the language to
         --  the list of additional_vim_regex_highlighting and disabled languages for indent.
-        additional_vim_regex_highlighting = { 'ruby' },
+        additional_vim_regex_highlighting = { 'ruby', 'python' },
       },
       indent = { enable = true, disable = { 'ruby' } },
     },
@@ -999,6 +972,7 @@ require('lazy').setup({
   require 'kickstart.plugins.comment',
   require 'kickstart.plugins.commentstring',
   require 'kickstart.plugins.indentmini',
+  require 'kickstart.plugins.colorschemes',
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
@@ -1041,6 +1015,8 @@ require('lspconfig').ruff.setup {
   },
 }
 
+require('lspconfig').ruff_lsp.setup {}
+
 require('lspconfig').pyright.setup {
   settings = {
     pyright = {
@@ -1048,8 +1024,9 @@ require('lspconfig').pyright.setup {
     },
     python = {
       analysis = {
-        ignore = { '*' },
+        diagnosticMode = 'off',
         typeCheckingMode = 'off',
+        reportMissingImports = false,
       },
     },
   },
@@ -1082,6 +1059,17 @@ require('lualine').setup {}
 -- Oil
 require('oil').setup {}
 vim.keymap.set('n', '-', '<cmd>Oil<CR>', { desc = 'Open parent directory' })
+
+-- Colorscheme settings
+-- Set colorscheme
+vim.cmd.colorscheme 'tokyonight-storm'
+vim.opt.background = 'dark' -- Set this to 'light' if you want a light theme and 'dark' if you want a dark theme
+vim.keymap.set('n', '<leader>ic', '<cmd>Telescope colorscheme<CR>', { desc = 'Change colorscheme (not permanent!)' })
+
+-- You can configure highlights by doing something like:
+vim.cmd.hi 'Comment gui=none'
+
+vim.api.nvim_set_hl(0, '@lsp.type.decorator.python', {})
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
