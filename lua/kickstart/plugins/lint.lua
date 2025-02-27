@@ -3,17 +3,28 @@ return {
   { -- Linting
     'mfussenegger/nvim-lint',
     event = { 'BufReadPre', 'BufNewFile' },
+    -- opts = {
+    --   linters = {
+    --     markdownlint = {
+    --       args = { '--disable', 'MD013' },
+    --     },
+    --   },
+    -- },
     config = function()
       local lint = require 'lint'
       lint.linters_by_ft = {
         markdown = { 'markdownlint' },
-        python = { 'ruff', 'mypy' },
+        python = { 'ruff' },
         javascript = { 'biomejs' },
         javascriptreact = { 'biomejs' },
+        json = { 'jsonlint' },
         typescript = { 'biomejs' },
         typescriptreact = { 'biomejs' },
         css = { 'biomejs' },
+        go = { 'golangcilint' },
       }
+      local markdownlint = require('lint').linters.markdownlint
+      markdownlint.args = { '--disable', 'MD013' }
 
       -- To allow other plugins to add linters to require('lint').linters_by_ft,
       -- instead set linters_by_ft like this:

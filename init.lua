@@ -108,6 +108,9 @@ vim.opt.number = true
 --  Experiment for yourself to see if you like it!
 vim.opt.relativenumber = true
 
+vim.opt.shiftwidth = 2
+vim.opt.tabstop = 2
+
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.opt.mouse = 'a'
 
@@ -237,6 +240,7 @@ vim.opt.rtp:prepend(lazypath)
 require('lazy').setup({
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
   'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
+  'nvim-neotest/nvim-nio',
 
   -- NOTE: Plugins can also be added by using a table,
   -- with the first argument being the link and the following
@@ -642,7 +646,9 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        clangd = {},
+        clangd = {
+          cmd = { 'clangd', '--offset-encoding=utf-16' },
+        },
         gopls = {},
         -- pyright = {},
         -- rust_analyzer = {},
@@ -752,6 +758,8 @@ require('lazy').setup({
         typescriptreact = { 'biome' },
         css = { 'biome' },
         markdown = { 'markdownlint' },
+        cpp = { 'clangformat' },
+        go = { 'gofmt' },
       },
     },
   },
@@ -1015,8 +1023,6 @@ require('lspconfig').ruff.setup {
   },
 }
 
-require('lspconfig').ruff_lsp.setup {}
-
 require('lspconfig').pyright.setup {
   settings = {
     pyright = {
@@ -1024,29 +1030,53 @@ require('lspconfig').pyright.setup {
     },
     python = {
       analysis = {
-        diagnosticMode = 'off',
-        typeCheckingMode = 'off',
+        diagnosticMode = 'openFilesOnly',
+        typeCheckingMode = 'standard',
         reportMissingImports = false,
       },
     },
   },
 }
 
+require('lspconfig').jsonls.setup {}
+
 require('lspconfig').biome.setup {}
 
 require('lspconfig').tailwindcss.setup {}
 
+-- Harpoon configuration here
 local harpoon = require 'harpoon'
 harpoon:setup {}
+local conf = require('telescope.config').values
+local function toggle_telescope(harpoon_files)
+  local file_paths = {}
+  for _, item in ipairs(harpoon_files.items) do
+    table.insert(file_paths, item.value)
+  end
+
+  require('telescope.pickers')
+    .new({}, {
+      prompt_title = 'Harpoon',
+      finder = require('telescope.finders').new_table {
+        results = file_paths,
+      },
+      previewer = conf.file_previewer {},
+      sorter = conf.generic_sorter {},
+    })
+    :find()
+end
+vim.keymap.set('n', '<C-e>', function()
+  toggle_telescope(harpoon:list())
+end, { desc = 'Open harpoon window' })
 vim.keymap.set('n', '<leader>pa', function()
   harpoon:list():add()
 end, { desc = 'Add to list' })
 vim.keymap.set('n', '<leader>pc', function()
   harpoon:list():clear()
 end, { desc = 'Clear list' })
-vim.keymap.set('n', '<C-e>', function()
-  harpoon.ui:toggle_quick_menu(harpoon:list())
-end)
+-- vim.keymap.set('n', '<C-e>', function()
+--   harpoon.ui:toggle_quick_menu(harpoon:list())
+-- end)
 vim.keymap.set('n', '<A-k>', function()
   harpoon:list():prev()
 end)
@@ -1062,7 +1092,7 @@ vim.keymap.set('n', '-', '<cmd>Oil<CR>', { desc = 'Open parent directory' })
 
 -- Colorscheme settings
 -- Set colorscheme
-vim.cmd.colorscheme 'tokyonight-storm'
+vim.cmd.colorscheme 'kanagawa'
 vim.opt.background = 'dark' -- Set this to 'light' if you want a light theme and 'dark' if you want a dark theme
 vim.keymap.set('n', '<leader>ic', '<cmd>Telescope colorscheme<CR>', { desc = 'Change colorscheme (not permanent!)' })
 
